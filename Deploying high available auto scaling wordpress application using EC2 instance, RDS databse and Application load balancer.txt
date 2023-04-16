@@ -1,0 +1,66 @@
+Deploying high available auto scaling wordpress application using EC2 instance, RDS databse and Application load balancer.
+
+Whenever you run an Infrastructure on Cloud you want to make sure that it is Highly Available, so that if due to some reason if something goes wrong it don’t impact the end user. 
+WordPress is a highly popular content management system (CMS). 
+It is most commonly used for blogs but can also be used for running e-commerce sites, message boards, and many other popular use cases.
+
+Instructions:
+
+1. Step 1: Create an AWS EC2 Instance. AWS Management Console → EC2 → Instances → Launch Instances.
+2. Select a Security Group that has inbound rules for HTTP, HTTPS, and SSH from anywhere. Or create a new one in case you don’t have one.
+3. Step 2: Configure the EC2 Instance with Apache Webserver and a PHP application named “WordPress”.
+4. Connect to the Instance using SSH Protocol. Install required packages, start and enable the httpd service, Install the application dependencies you need for WordPress.
+5. Download the WordPress application.
+6. Step 3: Configure AWS RDS to set up the MySQL database server for the WordPress application. AWS Management Console → Amazon RDS → Create database.
+7. Step 4: Provide the endpoint/ connection string to the WordPress application to make it work.
+First, let’s check if we can connect to the database endpoint: $ mysql -h [endpoint_of_rds_instance] -P 3306 -u admin -p
+8. Browse to your EC2 instance public IP where httpd webserver is running and perform configuration steps:
+After hitting the run installation, the Wordpress application will work.
+
+For the appliction to be high available and auto scalable.
+1. Create a AMI using the EC2 instance walredy created.
+2. Using the AMI create a Lauch configuration and with that create a auto scaling group.
+3. In the SG group for auto scaling group, add inboud rule to access the database in port 3306.
+4. Add the network (VPC) details, avaliabilty zones.
+5. Add or create load balancer for the ASG.
+6. Mention the desired capacity and auto scaling policy.
+7. After creating, use the Load balancer DNS to access the Wordpress webpage.
+
+
+Commands for EFS:
+
+sudo yum install -y httpd
+sudo yum install -y amazon-efs-utils
+sudo  systemctl enable httpd 
+sudo amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
+sudo wget https://wordpress.org/latest.tar.gz
+sudo tar -xzf latest.tar.gz
+sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport fs-05ddda19c653118e1.efs.us-east-1.amazonaws.com:/ /var/www/html/
+sudo cp -r wordpress/* /var/www/html/
+sudo systemctl restart httpd
+
+Manual Mount:
+fs-05ddda19c653118e1.efs.us-east-1.amazonaws.com:/ /var/www/html/ efs defaults,_netdev 0 0
+
+
+Endpoint for Database: wordpress.cv1ola8ech4p.us-east-1.rds.amazonaws.com
+Commnad to connect to databse from instance: mysql -h wordpress.cv1ola8ech4p.us-east-1.rds.amazonaws.com -P 3306 -u admin -p
+
+
+Commands for EBS:-
+#!/bin/bash
+yum update -y
+yum install -y httpd
+systemctl start httpd
+systemctl enable httpd
+amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
+wget https://wordpress.org/latest.tar.gz
+tar -xzf latest.tar.gz
+cp -r wordpress/* /var/www/html/
+systemctl restart httpd
+
+
+
+Links:
+https://aws.plainenglish.io/deploying-wordpress-with-amazon-rds-e749e639a69
+https://medium.com/analytics-vidhya/wordpress-on-aws-with-high-availability-35ec5732f1f6
